@@ -16,6 +16,7 @@ from mineru.backend.hybrid.hybrid_model_output_to_middle_json import (
     finalize_middle_json,
     init_middle_json,
 )
+from mineru.backend.vlm.image_enhance import enhance_image_descriptions
 from mineru.backend.utils.runtime_utils import exclude_progress_bar_idle_time
 from mineru.backend.pipeline.model_init import HybridModelSingleton
 from mineru.backend.vlm.vlm_analyze import (
@@ -654,6 +655,9 @@ def doc_analyze(
                 f"speed: {round(len(model_list) / infer_time, 3)} page/s"
             )
 
+        # 在线视觉模型增强图片描述
+        enhance_image_descriptions(middle_json["pdf_info"], image_writer)
+
         finalize_middle_json(
             middle_json["pdf_info"],
             hybrid_pipeline_model,
@@ -780,6 +784,9 @@ async def aio_doc_analyze(
                 f"processing-window infer finished, cost: {infer_time}, "
                 f"speed: {round(len(model_list) / infer_time, 3)} page/s"
             )
+
+        # 在线视觉模型增强图片描述
+        enhance_image_descriptions(middle_json["pdf_info"], image_writer)
 
         finalize_middle_json(
             middle_json["pdf_info"],

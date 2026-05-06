@@ -186,6 +186,27 @@ def get_llm_aided_config():
         return llm_aided_config
 
 
+def get_image_description_config():
+    """读取 image-description-config 配置段。
+
+    配置字段：
+        - enable: bool, 是否启用在线图片描述增强，默认 False
+        - api_key: str, API 密钥（必填）
+        - base_url: str, API 地址，默认 "https://api.siliconflow.cn/v1"
+        - model: str, 模型名称，默认 "Qwen/Qwen3-VL-32B-Thinking"
+        - enable_thinking: bool, 是否启用思考模式，默认 True
+        - max_tokens: int, 最大输出 token 数，默认 4096
+        - temperature: float, 采样温度，默认 0.6
+    """
+    config = read_config()
+    if config is None:
+        return None
+    image_description_config = config.get('image-description-config', None)
+    if image_description_config is None:
+        return None
+    return image_description_config
+
+
 def get_local_models_dir():
     config = read_config()
     if config is None:

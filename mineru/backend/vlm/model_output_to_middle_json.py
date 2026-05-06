@@ -20,6 +20,7 @@ from mineru.utils.enum_class import ContentType
 from mineru.utils.hash_utils import bytes_md5
 from mineru.utils.pdfium_guard import close_pdfium_document, pdfium_guard
 from mineru.version import __version__
+from mineru.backend.vlm.image_enhance import enhance_image_descriptions
 
 
 heading_level_import_success = False
@@ -156,6 +157,9 @@ def result_to_middle_json(model_output_blocks_list, images_list, pdf_doc, image_
             image_writer,
             progress_bar=progress_bar,
         )
+
+    # 在线视觉模型增强图片描述
+    enhance_image_descriptions(middle_json["pdf_info"], image_writer)
 
     finalize_middle_json(middle_json["pdf_info"])
     close_pdfium_document(pdf_doc)

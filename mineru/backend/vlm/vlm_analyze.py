@@ -19,6 +19,7 @@ from .model_output_to_middle_json import (
     finalize_middle_json,
     init_middle_json,
 )
+from .image_enhance import enhance_image_descriptions
 from mineru.backend.utils.runtime_utils import exclude_progress_bar_idle_time
 from ...data.data_reader_writer import DataWriter
 from mineru.utils.pdf_image_tools import (
@@ -503,6 +504,8 @@ def doc_analyze(
                 f"processing-window infer finished, cost: {infer_time}, "
                 f"speed: {round(len(results) / infer_time, 3)} page/s"
             )
+        # 在线视觉模型增强图片描述
+        enhance_image_descriptions(middle_json["pdf_info"], image_writer)
         finalize_middle_json(middle_json["pdf_info"])
         close_pdfium_document(pdf_doc)
         doc_closed = True
@@ -594,6 +597,8 @@ async def aio_doc_analyze(
                 f"processing-window infer finished, cost: {infer_time}, "
                 f"speed: {round(len(results) / infer_time, 3)} page/s"
             )
+        # 在线视觉模型增强图片描述
+        enhance_image_descriptions(middle_json["pdf_info"], image_writer)
         finalize_middle_json(middle_json["pdf_info"])
         close_pdfium_document(pdf_doc)
         doc_closed = True

@@ -31,6 +31,7 @@ from mineru.utils.pdfium_guard import close_pdfium_document, pdfium_guard
 from mineru.version import __version__
 
 from mineru.utils.llm_aided import llm_aided_title
+from mineru.backend.vlm.image_enhance import enhance_image_descriptions
 title_aided_enable = False
 llm_aided_config = get_llm_aided_config()
 if llm_aided_config:
@@ -333,6 +334,9 @@ def result_to_middle_json(
             _vlm_ocr_enable=_vlm_ocr_enable,
             progress_bar=progress_bar,
         )
+
+    # 在线视觉模型增强图片描述
+    enhance_image_descriptions(middle_json["pdf_info"], image_writer)
 
     finalize_middle_json(
         middle_json["pdf_info"],
