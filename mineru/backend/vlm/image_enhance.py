@@ -107,7 +107,12 @@ def _call_vision_api_sync(client: OpenAI, image_base64: str, config: dict) -> st
         "stream": False,
     }
 
-    if config.get("enable_thinking", True):
+    # Qwen3-VL-32B-Thinking already has thinking mode built-in;
+    # SiliconFlow API does not accept enable_thinking via extra_body for this model
+    enable_thinking = config.get("enable_thinking", True)
+    if enable_thinking and config.get("model", "").endswith("Thinking"):
+        pass  # thinking is already enabled in the model name
+    elif enable_thinking:
         api_params["extra_body"] = {"enable_thinking": True}
 
     retry_count = 0
@@ -144,28 +149,31 @@ def _collect_image_spans(pdf_info_list: list):
         List of dicts with keys: span, image_path, type.
     """
     image_spans = []
+
+    def _extract_spans_from_block(block):
+        for line in block.get("lines", []):
+            for span in line.get("spans", []):
+                span_type = span.get("type")
+                if span_type in (ContentType.IMAGE, ContentType.CHART):
+                    image_path = span.get("image_path", "")
+                    if image_path:
+                        image_spans.append({
+                            "span": span,
+                            "image_path": image_path,
+                            "type": span_type,
+                        })
+
     for page_info in pdf_info_list:
         for block in page_info.get("preproc_blocks", []):
             block_type = block.get("type")
-            # Check for visual blocks that contain IMAGE/CHART spans
-            if block_type not in (
-                BlockType.IMAGE_BODY,
-                BlockType.CHART_BODY,
-                BlockType.IMAGE,
-                BlockType.CHART,
-            ):
-                continue
-            for line in block.get("lines", []):
-                for span in line.get("spans", []):
-                    span_type = span.get("type")
-                    if span_type in (ContentType.IMAGE, ContentType.CHART):
-                        image_path = span.get("image_path", "")
-                        if image_path:
-                            image_spans.append({
-                                "span": span,
-                                "image_path": image_path,
-                                "type": span_type,
-                            })
+            if block_type in (BlockType.IMAGE, BlockType.CHART):
+                # Two-layer structure: image -> blocks -> image_body -> lines -> spans
+                for child in block.get("blocks", []):
+                    if child.get("type") in (BlockType.IMAGE_BODY, BlockType.CHART_BODY):
+                        _extract_spans_from_block(child)
+            elif block_type in (BlockType.IMAGE_BODY, BlockType.CHART_BODY):
+                # Flat structure: image_body -> lines -> spans
+                _extract_spans_from_block(block)
     return image_spans
 
 
@@ -296,6 +304,11 @@ def enhance_image_descriptions(pdf_info_list: list, image_writer) -> None:
     enhanced_count = 0
     failed_count = 0
 
+    # Track original content to detect if enhancement actually changed it
+    original_contents = {}
+    for span_info in image_spans:
+        original_contents[id(span_info["span"])] = span_info["span"].get("content", "")
+
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
         future_to_span = {}
         for span_info in image_spans:
@@ -312,8 +325,9 @@ def enhance_image_descriptions(pdf_info_list: list, image_writer) -> None:
             span_info = future_to_span[future]
             try:
                 future.result()
-                # Check if content was updated (non-empty after processing)
-                if span_info["span"].get("content", "").strip():
+                new_content = span_info["span"].get("content", "").strip()
+                original = original_contents.get(id(span_info["span"]), "")
+                if new_content and new_content != original:
                     enhanced_count += 1
                 else:
                     failed_count += 1
