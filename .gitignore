@@ -57,3 +57,11 @@ _build/
 
 
 output/
+work/
+.ace-tool/
+.trellis
+.opencode
+.agents
+.codestable
+.venv
+./work
