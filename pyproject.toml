@@ -103,14 +103,9 @@ pipeline = [
     "onnxruntime>1.17.0",
     "albumentations>=2.0.8,<3",
 ]
-gradio = [
-    "gradio>=5.49.1,!=6.0.0,!=6.0.1,!=6.0.2,!=6.1.0,!=6.2.0,!=6.3.0,!=6.4.0,!=6.5.0,!=6.5.1,!=6.6.0,!=6.7.0,<6.9.0",
-    "gradio-pdf>=0.0.22",
-]
 core = [
     "mineru[vlm]",
     "mineru[pipeline]",
-    "mineru[gradio]",
 ]
 all = [
     "mineru[core]",
@@ -133,8 +128,6 @@ mineru-lmdeploy-server = "mineru.cli.vlm_server:lmdeploy_server"
 mineru-openai-server = "mineru.cli.vlm_server:openai_server"
 mineru-models-download = "mineru.cli.models_download:download_models"
 mineru-api = "mineru.cli.fast_api:main"
-mineru-router = "mineru.cli.router:main"
-mineru-gradio = "mineru.cli.gradio_app:main"
 
 [tool.setuptools.dynamic]
 version = { attr = "mineru.version.__version__" }
@@ -158,7 +151,6 @@ addopts = "-s --cov=mineru --cov-report html"
 command_line = "-m pytest tests/unittest/test_e2e.py"
 source = ["mineru/"]
 omit = [
-    "*/gradio_app.py",
     "*/models_download.py",
     "*/fast_api.py",
     "*/cli/client.py",
