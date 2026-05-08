@@ -62,6 +62,5 @@ work/
 .trellis
 .opencode
 .agents
-.codestable
 .venv
 ./work
